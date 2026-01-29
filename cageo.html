@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CAgeo - Aziz Ab'Saber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        :root {
+            --primary: #808767;    /* Verde oliva */
+            --accent: #dcbb94;     /* Bege pastel */
+            --bg-light: #fcfaf7;
+            --white: #ffffff;
+            --text-main: #3d4035;
+            --today-mark: #f1c40f;
+            --transition-smooth: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding-bottom: 110px;
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* EFEITO RIPPLE (ONDA) CIRCULAR */
+        .ripple-container { position: relative; overflow: hidden; mask-image: -webkit-radial-gradient(white, black); }
+        .ripple { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.5); transform: scale(0); animation: ripple-animation 0.5s linear; pointer-events: none; }
+        @keyframes ripple-animation { to { transform: scale(4); opacity: 0; } }
+
+        .icon-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; }
+
+        /* CABEÇALHO DINÂMICO */
+        .header-wrapper { position: sticky; top: 0; z-index: 1000; transition: var(--transition-smooth); }
+        .top-bar { background-color: var(--primary); color: white; padding: 8px; text-align: center; font-size: 0.75rem; font-weight: 600; }
+        .app-header { background-color: var(--accent); padding: 0 15px; display: flex; align-items: center; justify-content: space-between; height: 70px; transition: var(--transition-smooth); position: relative; }
+        
+        .logo-container { position: absolute; left: 65px; transition: var(--transition-smooth); display: flex; align-items: center; }
+        .logo-header-img { height: 45px; width: auto; transition: var(--transition-smooth); }
+
+        .header-scrolled .app-header { background-color: var(--primary); height: 60px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+        .header-scrolled .logo-container { left: 50%; transform: translateX(-50%); }
+        .header-scrolled .logo-header-img { height: 38px; }
+        .header-scrolled i { color: white !important; }
+
+        .banner-box { background-color: var(--accent); padding: 10px 0 50px 0; text-align: center; border-radius: 0 0 50px 50px; transition: var(--transition-smooth); }
+        .header-scrolled + .banner-box { opacity: 0; transform: translateY(-20px) scale(0.95); margin-bottom: -160px; pointer-events: none; }
+        .banner-img { max-width: 85%; height: auto; }
+
+        /* SIDEBAR (CORREÇÃO DO BUG) */
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background-color: var(--primary); color: white; z-index: 2000; transition: transform 0.4s ease; padding: 40px 25px; box-sizing: border-box; }
+        .sidebar.active { transform: translateX(280px); }
+        .sidebar a { display: block; color: white; text-decoration: none; padding: 15px; border-radius: 12px; margin-bottom: 5px; font-size: 0.9rem; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1500; backdrop-filter: blur(4px); }
+        .overlay.active { display: block; }
+
+        /* PÁGINAS E FILTROS */
+        .page { display: none; padding: 20px; animation: slideUp 0.6s ease; }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: none; }
+        .filter-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #666; white-space: nowrap; }
+        .filter-btn.active { background: var(--primary); color: white; }
+
+        .card, .period-card, .accordion-item { background: var(--white); border-radius: 30px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); overflow: hidden; }
+        .period-card h2 { background: var(--primary); color: white; margin: 0; padding: 18px; font-size: 1rem; text-align: center; }
+        .disciplina { padding: 18px 22px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        .info-h { display: none; margin-top: 12px; font-size: 0.85rem; color: #666; padding-top: 10px; border-top: 1px dashed #ddd; }
+        .disciplina.active .info-h { display: block; }
+        .today-highlight { border-left: 12px solid var(--today-mark) !important; background-color: #fffdf2 !important; }
+
+        /* NAV INFERIOR */
+        .bottom-nav { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(61, 64, 53, 0.96); backdrop-filter: blur(20px); display: flex; padding: 15px 0; border-radius: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); z-index: 1000; }
+        .nav-item { text-align: center; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 10px; flex: 1; border-radius: 35px; transition: 0.3s; }
+        .nav-item.active { color: var(--accent); transform: translateY(-6px); }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 5px; }
+
+        /* CONTATOS */
+        .accordion-header { padding: 20px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: #fafaf8; }
+        .contact-card { background: white; padding: 15px; margin: 12px 18px; border-radius: 20px; text-decoration: none; color: var(--text-main); border-left: 6px solid var(--accent); display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div style="text-align: right; margin-bottom: 20px;"><i class="fa-solid fa-xmark icon-btn btn-ripple" onclick="toggleMenu()" style="color: white;"></i></div>
+        <h2>Aziz Ab'Saber</h2>
+        <a href="#" class="btn-ripple" onclick="showP('home', document.querySelector('.nav-item')); toggleMenu()">Página Inicial</a>
+        <a href="#" class="btn-ripple">Conheça Nossa Gestão</a>
+        <a href="#" class="btn-ripple">GTs e Laboratórios</a>
+        <a href="https://siga.upe.br/upe/index.jsp" class="btn-ripple" target="_blank">Portal SIGA</a>
+        <a href="#" class="btn-ripple" onclick="showP('ouvidoria', document.querySelectorAll('.nav-item')[3]); toggleMenu()">Ouvidoria</a>
+    </div>
+
+    <div class="header-wrapper" id="headerWrapper">
+        <div class="top-bar">A semana de Geografia vem aí, fique ligado!</div>
+        <div class="app-header">
+            <div class="icon-btn btn-ripple" onclick="toggleMenu()"><i class="fa-solid fa-bars" style="color: var(--primary);"></i></div>
+            <div class="logo-container"><img src="logo-header.png" alt="CAGEO" class="logo-header-img"></div>
+            <div class="icon-btn btn-ripple"><i class="fa-solid fa-search" style="color: var(--primary);"></i></div>
+        </div>
+    </div>
+
+    <div class="banner-box"><img src="banner-cageo.png" alt="Banner" class="banner-img"></div>
+
+    <div id="home" class="page active">
+        <h3 style="color: var(--primary); font-weight: 800; margin-left: 10px;">Publicações Recentes</h3>
+        <p style="color: #777; font-size: 0.85rem; margin-left: 10px;">@cageoupegus</p>
+        <a href="https://siga.upe.br/upe/index.jsp" class="card btn-ripple" style="display:flex; align-items:center; padding:25px; text-decoration:none; color:inherit;">
+            <div style="background:var(--primary); color:white; width:50px; height:50px; border-radius:18px; display:flex; align-items:center; justify-content:center; margin-right:20px;"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div><b>Portal SIGA</b><br><small style="opacity: 0.7;">Notas e Frequência</small></div>
+        </a>
+    </div>
+
+    <div id="horarios" class="page">
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterPeriod('all', this)">Todos</button>
+            <button class="filter-btn" onclick="filterPeriod('1', this)">1º</button>
+            <button class="filter-btn" onclick="filterPeriod('3', this)">3º</button>
+            <button class="filter-btn" onclick="filterPeriod('5', this)">5º</button>
+            <button class="filter-btn" onclick="filterPeriod('7', this)">7º</button>
+            <button class="filter-btn" onclick="filterPeriod('extra', this)">Extra</button>
+        </div>
+
+        <div class="period-card" data-period="1">
+            <h2>1º Período - Sala 01</h2>
+            <div class="disciplina btn-ripple" data-day="Segunda" onclick="tglH(this)"><strong>Segunda: Geologia</strong><div class="info-h">LGG0021 | Kleber Carvalho Lima</div></div>
+            <div class="disciplina btn-ripple" data-day="Terça" onclick="tglH(this)"><strong>Terça: Introdução à Ciência Geo</strong><div class="info-h">LGG0059 | José Carlos Guedes</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Língua Portuguesa</strong><div class="info-h">NCL0016 | Dirce Jeger</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Geografia Econômica</strong><div class="info-h">LGG0019 | Clélio Cristiano dos Santos</div></div>
+            <div class="disciplina btn-ripple" data-day="Sexta" onclick="tglH(this)"><strong>Sexta: Fundamentos Antropológicos</strong><div class="info-h">NCL0015 | Tiago Brentam</div></div>
+        </div>
+
+        <div class="period-card" data-period="3">
+            <h2>3º Período - Sala 03</h2>
+            <div class="disciplina btn-ripple" data-day="Segunda" onclick="tglH(this)"><strong>Segunda: História do Pensamento</strong><div class="info-h">LGG0020 | José Carlos Guedes</div></div>
+            <div class="disciplina btn-ripple" data-day="Terça" onclick="tglH(this)"><strong>Terça: Geomorfologia</strong><div class="info-h">LGG0012 | Kleber Carvalho Lima</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Metodologia Científica</strong><div class="info-h">NCL0027 | Iwelton Madson</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Cartografia Temática</strong><div class="info-h">LGG0026 | Deivide Benício Soares</div></div>
+            <div class="disciplina btn-ripple" data-day="Sexta" onclick="tglH(this)"><strong>Sexta: Geo Regional do Brasil</strong><div class="info-h">LGG0029 | Clélio Cristiano dos Santos</div></div>
+        </div>
+
+        <div class="period-card" data-period="5">
+            <h2>5º Período - Sala 05</h2>
+            <div class="disciplina btn-ripple" data-day="Segunda" onclick="tglH(this)"><strong>Segunda: Biogeografia</strong><div class="info-h">LLG0027 | Iaponan Cardins</div></div>
+            <div class="disciplina btn-ripple" data-day="Terça" onclick="tglH(this)"><strong>Terça: Geografia Agrária</strong><div class="info-h">LGG0013 | José Natan Gonçalves</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Ed. Étnico-Raciais</strong><div class="info-h">NCL0019 | Ailson Barbosa da Silva</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Estágio I</strong><div class="info-h">LGG0037 | Denize Tomaz de Aquino</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Didática</strong><div class="info-h">NCL0018 | Nayane</div></div>
+            <div class="disciplina btn-ripple" data-day="Sexta" onclick="tglH(this)"><strong>Sexta: Geografia Urbana</strong><div class="info-h">LGG0014 | Clélio Cristiano dos Santos</div></div>
+        </div>
+
+        <div class="period-card" data-period="7">
+            <h2>7º Período - Sala 07</h2>
+            <div class="disciplina btn-ripple" data-day="Segunda" onclick="tglH(this)"><strong>Segunda: Teorias Geo Humana</strong><div class="info-h">LGG0043 | José Natan Gonçalves</div></div>
+            <div class="disciplina btn-ripple" data-day="Terça" onclick="tglH(this)"><strong>Terça: Teorias Geo Física</strong><div class="info-h">LGG0055 | Iaponan Cardins</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Educação Ambiental</strong><div class="info-h">LGG0071 | Alberlene Ribeiro</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Estágio III</strong><div class="info-h">LGG0046 | Ailson Barbosa da Silva</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Dinâmica Espaço Mundial</strong><div class="info-h">LGG0044 | Clélio Cristiano</div></div>
+            <div class="disciplina btn-ripple" data-day="Sexta" onclick="tglH(this)"><strong>Sexta: Org. Educação Nacional</strong><div class="info-h">NCL0034 | Márcia Fernanda</div></div>
+        </div>
+
+        <div class="period-card" data-period="extra">
+            <h2>Turmas Extras</h2>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Geologia (Bio)</strong><div class="info-h">Alberlene Oliveira | 20h30–22h</div></div>
+            <div class="disciplina btn-ripple" data-day="Quarta" onclick="tglH(this)"><strong>Quarta: Prática VIII</strong><div class="info-h">Iwelton Madson | 14h30–18h</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Pedologia</strong><div class="info-h">Deivide Benício | 15h</div></div>
+            <div class="disciplina btn-ripple" data-day="Quinta" onclick="tglH(this)"><strong>Quinta: Geografia da Saúde</strong><div class="info-h">Denize Tomaz | 14h</div></div>
+            <div class="disciplina btn-ripple" onclick="tglH(this)"><strong>Orientação TCC</strong><div class="info-h">TCC I, III e IV | Alberlene / Ailson</div></div>
+        </div>
+    </div>
+
+    <div id="contatos" class="page">
+        <div class="accordion-item">
+            <div class="accordion-header btn-ripple" onclick="tglA(this)"><span>Docentes</span><i class="fa-solid fa-chevron-down"></i></div>
+            <div class="accordion-content">
+                <a href="mailto:ailson.barbosa@upe.br" class="contact-card btn-ripple">Ailson Barbosa da Silva</a>
+                <a href="mailto:alberlene.oliveira@upe.br" class="contact-card btn-ripple">Alberlene Ribeiro de Oliveira</a>
+                <a href="mailto:clelio.santos@upe.br" class="contact-card btn-ripple">Clélio Cristiano dos Santos</a>
+                <a href="mailto:deivide.benicio@upe.br" class="contact-card btn-ripple">Deivide Benício Soares</a>
+                <a href="mailto:denize.aquino@upe.br" class="contact-card btn-ripple">Denize Tomaz de Aquino</a>
+                <a href="mailto:iaponan.cardins@upe.br" class="contact-card btn-ripple">Iaponan Cardins de Sousa Almeida</a>
+                <a href="mailto:iwelton.madson@upe.br" class="contact-card btn-ripple">Iwelton Madson Celestino Pereira</a>
+                <a href="mailto:jose.guedes@upe.br" class="contact-card btn-ripple">José Carlos de Souza Guedes</a>
+                <a href="mailto:josenatan.silva@upe.br" class="contact-card btn-ripple">José Natan Gonçalves da Silva</a>
+                <a href="mailto:kleber.carvalho@upe.br" class="contact-card btn-ripple">Kleber Carvalho Lima</a>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <div class="accordion-header btn-ripple" onclick="tglA(this)"><span>Vida Acadêmica</span><i class="fa-solid fa-chevron-down"></i></div>
+            <div class="accordion-content">
+                <a href="mailto:escolaridadegaranhuns@upe.br" class="contact-card btn-ripple">Escolaridade / Documentos</a>
+                <a href="mailto:garanhuns.biblioteca@upe.br" class="contact-card btn-ripple">Biblioteca</a>
+                <a href="mailto:graduacao.garanhuns@upe.br" class="contact-card btn-ripple">Graduação</a>
+                <a href="mailto:posgrad.garanhuns@upe.br" class="contact-card btn-ripple">Pós-graduação</a>
+                <a href="mailto:estagio.garanhuns@upe.br" class="contact-card btn-ripple">Estágio</a>
+                <a href="mailto:extensao.garanhuns@upe.br" class="contact-card btn-ripple">Extensão</a>
+                <a href="mailto:cep.garanhuns@upe.br" class="contact-card btn-ripple">CEP</a>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <div class="accordion-header btn-ripple" onclick="tglA(this)"><span>Setores Administrativos</span><i class="fa-solid fa-chevron-down"></i></div>
+            <div class="accordion-content">
+                <a href="mailto:geografia.garanhuns@upe.br" class="contact-card btn-ripple">Coordenação de Geografia</a>
+                <a href="mailto:apoioacademico.garanhuns@upe.br" class="contact-card btn-ripple">Apoio Acadêmico</a>
+                <a href="mailto:assessoria.garanhuns@upe.br" class="contact-card btn-ripple">Assessoria</a>
+                <a href="mailto:direcao.garanhuns@upe.br" class="contact-card btn-ripple">Direção do Campus</a>
+                <a href="mailto:planejamento.garanhuns@upe.br" class="contact-card btn-ripple">Planejamento</a>
+                <a href="mailto:noticias.garanhuns@upe.br" class="contact-card btn-ripple">Notícias Institucionais</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="ouvidoria" class="page">
+        <div class="card" style="height: 75vh; border-radius: 30px; overflow: hidden;">
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSd8H1D0TrHaka3lrIRCdQu1VgNYMu1qOGRoFYa0B5ifrgwrMg/viewform?embedded=true" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item btn-ripple active" onclick="showP('home', this)"><i class="fa-solid fa-house"></i>Início</a>
+        <a href="#" class="nav-item btn-ripple" onclick="showP('horarios', this)"><i class="fa-solid fa-clock"></i>Horários</a>
+        <a href="#" class="nav-item btn-ripple" onclick="showP('contatos', this)"><i class="fa-solid fa-address-book"></i>Contatos</a>
+        <a href="#" class="nav-item btn-ripple" onclick="showP('ouvidoria', this)"><i class="fa-solid fa-comments"></i>Ouvidoria</a>
+    </nav>
+
+    <script>
+        function createRipple(event) {
+            const btn = event.currentTarget;
+            const circle = document.createElement("span");
+            const d = Math.max(btn.clientWidth, btn.clientHeight);
+            circle.style.width = circle.style.height = `${d}px`;
+            circle.style.left = `${event.clientX - btn.getBoundingClientRect().left - d/2}px`;
+            circle.style.top = `${event.clientY - btn.getBoundingClientRect().top - d/2}px`;
+            circle.classList.add("ripple");
+            const prev = btn.getElementsByClassName("ripple")[0];
+            if (prev) prev.remove();
+            btn.appendChild(circle);
+        }
+
+        document.querySelectorAll('.btn-ripple').forEach(b => { b.classList.add('ripple-container'); b.addEventListener('click', createRipple); });
+
+        window.addEventListener('scroll', () => {
+            const h = document.getElementById('headerWrapper');
+            if (window.scrollY > 40) h.classList.add('header-scrolled');
+            else h.classList.remove('header-scrolled');
+        });
+
+        // Controle do Menu Lateral
+        function toggleMenu() { 
+            document.getElementById('sidebar').classList.toggle('active'); 
+            document.getElementById('overlay').classList.toggle('active'); 
+        }
+
+        // Navegação entre Páginas
+        function showP(pId, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pId).classList.add('active'); 
+            el.classList.add('active');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // Filtro de Períodos na Grade
+        function filterPeriod(p, b) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); 
+            b.classList.add('active');
+            document.querySelectorAll('.period-card').forEach(c => {
+                c.style.display = (p === 'all' || c.dataset.period === p) ? 'block' : 'none';
+            });
+        }
+
+        // Funções de Expansão (Acordeão)
+        function tglH(e) { e.classList.toggle('active'); }
+        function tglA(h) { 
+            const c = h.nextElementSibling; 
+            c.style.maxHeight = c.style.maxHeight && c.style.maxHeight !== "0px" ? "0px" : c.scrollHeight + "px"; 
+        }
+        
+        // Lógica para Identificar o Dia Atual
+        const dNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+        const todayName = dNames[new Date().getDay()];
+        
+        document.querySelectorAll('.disciplina').forEach(v => {
+            if (v.getAttribute('data-day') === todayName) {
+                v.classList.add('today-highlight');
+                if (!v.innerHTML.includes('HOJE')) {
+                    v.querySelector('strong').innerHTML += " <span style='font-size:10px; background:var(--today-mark); padding:2px 7px; border-radius:10px; color:#000; margin-left:5px;'>HOJE</span>";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "CAgeo - Aziz Ab'Saber",
+  "short_name": "CAgeo",
+  "description": "Aplicativo oficial da Chapa Aziz Ab'Saber - CAgeo UPE",
+  "start_url": "CAGEO.html",
+  "display": "standalone",
+  "background_color": "#fcfaf7",
+  "theme_color": "#808767",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo-header.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-header.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
